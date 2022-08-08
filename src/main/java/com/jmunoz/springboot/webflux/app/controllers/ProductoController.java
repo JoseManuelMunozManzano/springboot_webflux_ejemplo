@@ -2,6 +2,8 @@ package com.jmunoz.springboot.webflux.app.controllers;
 
 import com.jmunoz.springboot.webflux.app.models.dao.ProductoDao;
 import com.jmunoz.springboot.webflux.app.models.documents.Producto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,14 +19,19 @@ public class ProductoController {
     @Autowired
     private ProductoDao dao;
 
+    private static final Logger log = LoggerFactory.getLogger(ProductoController.class);
+
     @GetMapping({"/listar", "/"})
     public String listar(Model model) {
-        // Esta es la única diferencia, que se usa un Flux.
-        // Siendo este el observable, no es necesario subscribirse.
-        Flux<Producto> productos = dao.findAll();
+        // Se añade un map para transformar el nombre del producto en mayúsculas
+        Flux<Producto> productos = dao.findAll().map(producto -> {
+            producto.setNombre(producto.getNombre().toUpperCase());
+            return producto;
+        });
 
-        // Aquí, por debajo, se va a subscribir de forma automática, es decir,
-        // mostrar los datos en una plantilla con Thymeleaf.
+        // Se va a agregar otro subscriptor, el log con el nombre
+        productos.subscribe(prod -> log.info(prod.getNombre()));
+
         model.addAttribute("productos", productos);
         model.addAttribute("titulo", "Listado de productos");
 
