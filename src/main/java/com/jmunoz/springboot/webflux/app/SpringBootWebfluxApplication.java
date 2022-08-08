@@ -11,14 +11,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import reactor.core.publisher.Flux;
 
+import java.util.Date;
+
 @SpringBootApplication
 public class SpringBootWebfluxApplication implements CommandLineRunner {
 
 	@Autowired
 	private ProductoDao dao;
 
-	// Para desarrollo, cada vez que se arranca el proyecto, borrar colección con los datos de prueba
-	// y volver a crearlos
 	@Autowired
 	private ReactiveMongoTemplate mongoTemplate;
 
@@ -30,11 +30,8 @@ public class SpringBootWebfluxApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		// Eliminando los productos. Devuelve un Mono.
-		// Recordar que hay que subscribirse para que se ejecute.
 		mongoTemplate.dropCollection("productos").subscribe();
 
-		// Cada producto lo vamos a guardar en la BD Mongo
 		Flux.just(new Producto("TV Panasonic Pantalla LCD", 456.89),
 				new Producto("Sony Camara HD Digital", 177.89),
 				new Producto("Apple iPod", 46.89),
@@ -45,13 +42,12 @@ public class SpringBootWebfluxApplication implements CommandLineRunner {
 				new Producto("Mica Cómoda 5 Cajones", 150.89),
 				new Producto("TV Sony Bravia OLED 4K Ultra HD", 2255.89)
 		)
-				// El problema de Map es que save genera un Mono, por lo que ahora NO tenemos un flujo de productos,
-				// sino un flujo de Mono de productos.
-				//
-				// Por eso se usa flatMap, que obtiene un observable (de Flux o Mono) y lo aplana, convirtiéndolo
-				// en nuestro objeto producto
-				.flatMap(producto -> dao.save(producto))
+				.flatMap(producto -> {
+					// Agregar fecha en el save
+					producto.setCreateAt(new Date());
+
+					return dao.save(producto);
+				})
 				.subscribe(producto -> log.info("insert: " + producto.getId() + " " + producto.getNombre()));
 	}
-
 }
