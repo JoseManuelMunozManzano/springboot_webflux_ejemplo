@@ -65,4 +65,30 @@ public class ProductoController {
 
         return "listar";
     }
+
+    // 2. Chunked.
+    //    El buffer se MIDE EN UN TAMAÑO EN BYTES y no en cantidad de elementos.
+    //
+    //    Modalidad 1: Se establece un límite máximo
+    //    Se utiliza cuando el stream tiene una gran cantidad de elementos, miles.
+    //
+    //    Modalidad 2: Full o completo
+    //    No se configura ningún límite para el tamaño máximo del buffer o chunk. Toda la salida de la plantilla se
+    //    genera como un solo fragmento, de un solo golpe.
+    //    Solo se recomienda cuando no hay muchos datos que renderizar en la vista o se usa paginación.
+    @GetMapping("/listar-full")
+    public String listarFull(Model model) {
+        // Se usa repeat para emular que hay una gran cantidad de elementos en el flujo
+        Flux<Producto> productos = dao.findAll().map(producto -> {
+            producto.setNombre(producto.getNombre().toUpperCase());
+            return producto;
+        }).repeat(5000);
+
+        model.addAttribute("productos", productos);
+        model.addAttribute("titulo", "Listado de productos");
+
+        return "listar";
+    }
+
+
 }
