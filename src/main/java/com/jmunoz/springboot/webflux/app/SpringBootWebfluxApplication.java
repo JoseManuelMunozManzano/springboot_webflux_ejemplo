@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import reactor.core.publisher.Flux;
 
 @SpringBootApplication
@@ -15,6 +16,11 @@ public class SpringBootWebfluxApplication implements CommandLineRunner {
 
 	@Autowired
 	private ProductoDao dao;
+
+	// Para desarrollo, cada vez que se arranca el proyecto, borrar colección con los datos de prueba
+	// y volver a crearlos
+	@Autowired
+	private ReactiveMongoTemplate mongoTemplate;
 
 	private static final Logger log = LoggerFactory.getLogger(SpringBootWebfluxApplication.class  );
 
@@ -24,8 +30,11 @@ public class SpringBootWebfluxApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		// Cada producto lo vamos a guardar en la BD Mongo
+		// Eliminando los productos. Devuelve un Mono.
+		// Recordar que hay que subscribirse para que se ejecute.
+		mongoTemplate.dropCollection("productos").subscribe();
 
+		// Cada producto lo vamos a guardar en la BD Mongo
 		Flux.just(new Producto("TV Panasonic Pantalla LCD", 456.89),
 				new Producto("Sony Camara HD Digital", 177.89),
 				new Producto("Apple iPod", 46.89),
@@ -44,4 +53,5 @@ public class SpringBootWebfluxApplication implements CommandLineRunner {
 				.flatMap(producto -> dao.save(producto))
 				.subscribe(producto -> log.info("insert: " + producto.getId() + " " + producto.getNombre()));
 	}
+
 }

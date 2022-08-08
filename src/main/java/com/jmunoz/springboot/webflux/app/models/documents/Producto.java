@@ -7,7 +7,9 @@ import java.util.Date;
 
 // Cuando se mapea a este Document se transforma en un JSON binario, llamado BSON, que es el tipo de dato
 // en el que se guardan los datos en MONGO.
-@Document(collation = "productos")
+//
+// Se corrige porque es collection
+@Document(collection = "productos")
 public class Producto {
 
     // En MongoDB el id es un string
